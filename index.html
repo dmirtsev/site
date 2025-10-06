@@ -66,10 +66,21 @@
             border: 1px solid rgba(255, 255, 255, 0.2);
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
+        
+        #user-photo {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 3px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            margin-bottom: 20px;
+            object-fit: cover;
+        }
     </style>
 </head>
 <body>
     <div class="container">
+        <img id="user-photo" src="" alt="User Photo">
         <h1>Добро пожаловать!</h1>
         <p>Ваши данные из Telegram:</p>
         <pre id="user-info">Загрузка данных...</pre>
@@ -80,6 +91,7 @@
             const tg = window.Telegram.WebApp;
             const userInfoContainer = document.getElementById('user-info');
             const h1 = document.querySelector('h1');
+            const userPhoto = document.getElementById('user-photo');
 
             try {
                 tg.ready();
@@ -91,9 +103,15 @@
                     const greeting = `Привет, ${user.first_name || 'дорогой'} ${user.last_name || 'пользователь'}!`;
                     h1.textContent = greeting;
                     userInfoContainer.textContent = JSON.stringify(user, null, 2);
+                    if (user.photo_url) {
+                        userPhoto.src = user.photo_url;
+                    } else {
+                        userPhoto.style.display = 'none'; // Скрываем, если фото нет
+                    }
                 } else {
                     // Если открыто в браузере, показываем тестовые данные
                     h1.textContent = 'Привет, Тестовый Пользователь!';
+                    userPhoto.src = 'https://via.placeholder.com/100'; // Заглушка для фото
                     const testData = {
                         id: 12345678,
                         first_name: "Тест",

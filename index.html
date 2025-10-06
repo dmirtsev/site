@@ -19,8 +19,8 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            color: var(--tg-theme-text-color);
-            background-color: var(--tg-theme-bg-color);
+            color: #fff;
+            background: linear-gradient(45deg, #6a11cb, #2575fc);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -30,33 +30,41 @@
             padding: 20px;
             box-sizing: border-box;
             text-align: center;
+            overflow: hidden;
         }
 
         .container {
-            animation: fadeIn 0.8s ease-out forwards;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeIn 0.8s 0.2s ease-out forwards;
         }
 
         h1 {
-            font-size: 28px;
-            font-weight: 600;
+            font-size: 36px;
+            font-weight: 700;
             margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
 
         p {
-            font-size: 16px;
-            margin-bottom: 20px;
+            font-size: 18px;
+            margin-bottom: 25px;
+            opacity: 0.9;
         }
 
         #user-info {
-            background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
-            padding: 15px;
-            border-radius: 12px;
+            background-color: rgba(255, 255, 255, 0.15);
+            color: #fff;
+            padding: 20px;
+            border-radius: 15px;
             white-space: pre-wrap;
             word-wrap: break-word;
-            font-size: 13px;
+            font-size: 14px;
             max-width: 100%;
             overflow-x: auto;
             text-align: left;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
     </style>
 </head>
@@ -70,19 +78,36 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const tg = window.Telegram.WebApp;
-            tg.ready();
-
             const userInfoContainer = document.getElementById('user-info');
-            if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-                const user = tg.initDataUnsafe.user;
-                const user = tg.initDataUnsafe.user;
-                const greeting = `Привет, ${user.first_name || ''} ${user.last_name || ''}!`;
-                document.querySelector('h1').textContent = greeting;
+            const h1 = document.querySelector('h1');
 
-                // Отображаем все данные пользователя в красивом формате
-                userInfoContainer.textContent = JSON.stringify(user, null, 2);
-            } else {
-                userInfoContainer.textContent = 'Не удалось получить данные. Пожалуйста, убедитесь, что вы открыли приложение внутри Telegram.';
+            try {
+                tg.ready();
+
+                const user = tg.initDataUnsafe ? tg.initDataUnsafe.user : null;
+
+                if (user) {
+                    // Если мы в Telegram, показываем реальные данные
+                    const greeting = `Привет, ${user.first_name || 'дорогой'} ${user.last_name || 'пользователь'}!`;
+                    h1.textContent = greeting;
+                    userInfoContainer.textContent = JSON.stringify(user, null, 2);
+                } else {
+                    // Если открыто в браузере, показываем тестовые данные
+                    h1.textContent = 'Привет, Тестовый Пользователь!';
+                    const testData = {
+                        id: 12345678,
+                        first_name: "Тест",
+                        last_name: "Тестов",
+                        username: "test_user",
+                        language_code: "ru",
+                        is_premium: true
+                    };
+                    userInfoContainer.textContent = 'Это тестовые данные. В Telegram здесь будет ваша информация.\n\n' + JSON.stringify(testData, null, 2);
+                }
+            } catch (error) {
+                // Обработка других ошибок
+                h1.textContent = 'Ошибка';
+                userInfoContainer.textContent = 'Произошла ошибка при загрузке данных: ' + error.message;
             }
         });
     </script>

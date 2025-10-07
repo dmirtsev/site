@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Astro Learning - Telegram Mini App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* Светлая тема */
+            --primary: #4A5568;
+            --secondary: #D4AF37;
+            --accent: #2D3748;
+            --bg: #FFFFFF;
+            --text: #1A202C;
+            --card-bg: #F7FAFC;
+            --border: #E2E8F0;
+            --success: #48BB78;
+            --danger: #F56565;
+        }
+
+        [data-theme="dark"] {
+            --primary: #E2E8F0;
+            --secondary: #F6E05E;
+            --accent: #4299E1;
+            --bg: #1A202C;
+            --text: #F7FAFC;
+            --card-bg: #2D3748;
+            --border: #4A5568;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Roboto', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            max-width: 480px;
+            margin: 0 auto;
+            height: 100vh;
+            overflow: hidden;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .header {
+            padding: 12px 16px;
+            background: var(--bg);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .theme-toggle {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 4px;
+            transition: transform 0.2s;
+        }
+
+        .theme-toggle:active {
+            transform: scale(0.95);
+        }
+
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 70px;
+        }
+
+        .screen {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .profile-header {
+            background: linear-gradient(135deg, var(--accent) 0%, var(--primary) 100%);
+            padding: 24px 16px;
+            color: white;
+            text-align: center;
+        }
+
+        .avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 4px solid white;
+            margin: 0 auto 12px;
+            background: var(--secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+        }
+
+        .user-name {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .user-level {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            padding: 20px 16px;
+            background: var(--bg);
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--secondary);
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--primary);
+            margin-top: 4px;
+        }
+
+        .progress-section {
+            padding: 20px 16px;
+            background: var(--card-bg);
+            margin: 16px;
+            border-radius: 12px;
+        }
+
+        .progress-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .progress-bar-container {
+            position: relative;
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 12px 0;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--secondary) 0%, var(--accent) 100%);
+            transition: width 0.5s ease;
+            border-radius: 4px;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            margin-top: 8px;
+        }
+
+        .progress-tasks {
+            margin-top: 16px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .progress-tasks li {
+            margin-left: 20px;
+            margin-bottom: 6px;
+        }
+
+        .section {
+            padding: 16px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .section-subtitle {
+            font-size: 13px;
+            color: var(--primary);
+            margin-top: 4px;
+        }
+
+        .content-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 16px;
+            border: 1px solid var(--border);
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .content-card:active {
+            transform: scale(0.98);
+        }
+
+        .card-image {
+            width: 100%;
+            height: 180px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            position: relative;
+        }
+
+        .card-badge {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .card-relevance {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            background: var(--secondary);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .card-content {
+            padding: 16px;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            line-height: 1.3;
+        }
+
+        .card-description {
+            font-size: 14px;
+            color: var(--primary);
+            line-height: 1.5;
+            margin-bottom: 12px;
+        }
+
+        .card-meta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 13px;
+            color: var(--primary);
+            margin-bottom: 12px;
+        }
+
+        .card-tags {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        .tag {
+            background: var(--border);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            color: var(--accent);
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: var(--border);
+            color: var(--text);
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+        }
+
+        .filters {
+            padding: 16px;
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .filter-row {
+            margin-bottom: 16px;
+        }
+
+        .filter-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .filter-label {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .filter-chips {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .chip {
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background: var(--bg);
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .chip.active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        .chip:active {
+            transform: scale(0.95);
+        }
+
+        .search-container {
+            padding: 16px;
+            background: var(--bg);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: var(--card-bg);
+            color: var(--text);
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .achievements-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            padding: 16px;
+        }
+
+        .achievement-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            border: 2px solid var(--border);
+            transition: all 0.2s;
+        }
+
+        .achievement-card.unlocked {
+            border-color: var(--secondary);
+            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2);
+        }
+
+        .achievement-card.locked {
+            opacity: 0.5;
+        }
+
+        .achievement-icon {
+            font-size: 48px;
+            margin-bottom: 8px;
+        }
+
+        .achievement-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .achievement-description {
+            font-size: 12px;
+            color: var(--primary);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 40px;
+        }
+
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+
+        .empty-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .empty-description {
+            font-size: 14px;
+            color: var(--primary);
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+
+        .empty-action {
+            display: inline-block;
+            padding: 12px 24px;
+            background: var(--accent);
+            color: white;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .empty-action:active {
+            transform: scale(0.95);
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            animation: fadeIn 0.3s;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg);
+            border-radius: 20px;
+            padding: 32px 24px;
+            max-width: 320px;
+            width: 90%;
+            text-align: center;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-icon {
+            font-size: 72px;
+            margin-bottom: 16px;
+            animation: bounce 0.6s ease;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .modal-title {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: var(--secondary);
+        }
+
+        .modal-description {
+            font-size: 15px;
+            line-height: 1.6;
+            margin-bottom: 8px;
+        }
+
+        .modal-reward {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--success);
+            margin-bottom: 24px;
+        }
+
+        .bottom-nav {
+            display: flex;
+            background: var(--bg);
+            border-top: 1px solid var(--border);
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            max-width: 480px;
+            margin: 0 auto;
+            z-index: 100;
+        }
+
+        .nav-item {
+            flex: 1;
+            padding: 8px 0;
+            background: none;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            color: var(--primary);
+            transition: all 0.2s;
+        }
+
+        .nav-item.active {
+            color: var(--accent);
+        }
+
+        .nav-icon {
+            font-size: 24px;
+        }
+
+        .nav-label {
+            font-size: 11px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header class="header">
+            <h1 class="header-title">Astro Learning</h1>
+            <button class="theme-toggle" id="theme-toggle">🌓</button>
+        </header>
+
+        <main class="content">
+            <!-- Экран профиля -->
+            <section id="profile" class="screen active">
+                <div class="profile-header">
+                    <div class="avatar">✨</div>
+                    <h2 class="user-name">Алексей</h2>
+                    <p class="user-level">Уровень: Мыслящий эзотерик</p>
+                </div>
+                <div class="stats">
+                    <div class="stat-item">
+                        <span class="stat-value">142</span>
+                        <span class="stat-label">Звездочки</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">12</span>
+                        <span class="stat-label">Регалий</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">87%</span>
+                        <span class="stat-label">Активность</span>
+                    </div>
+                </div>
+                <div class="progress-section">
+                    <h3 class="progress-title">Ваш следующий уровень: "Знаток аспектов"</h3>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" style="width: 67%;"></div>
+                    </div>
+                    <div class="progress-info">
+                        <span>Прогресс: 67%</span>
+                        <span>+20 ⭐ до цели</span>
+                    </div>
+                </div>
+                <div class="section">
+                    <div class="section-header">
+                        <h3 class="section-title">Ваши регалии</h3>
+                    </div>
+                    <div class="achievements-grid">
+                        <div class="achievement-card unlocked">
+                            <div class="achievement-icon">🌟</div>
+                            <h4 class="achievement-title">Первые шаги</h4>
+                            <p class="achievement-description">Вы начали свой путь</p>
+                        </div>
+                        <div class="achievement-card locked">
+                            <div class="achievement-icon">🌙</div>
+                            <h4 class="achievement-title">Лунная мудрость</h4>
+                            <p class="achievement-description">Изучить 5 материалов о Луне</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Экран контента -->
+            <section id="content-screen" class="screen">
+                <div class="search-container">
+                    <input type="text" class="search-input" placeholder="Поиск по материалам...">
+                </div>
+                <div class="filters">
+                    <div class="filter-row">
+                        <span class="filter-label">Тема:</span>
+                        <div class="filter-chips">
+                            <button class="chip active">Все</button>
+                            <button class="chip">Аспекты</button>
+                            <button class="chip">Планеты</button>
+                            <button class="chip">Дома</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="section">
+                    <div class="section-header">
+                        <div>
+                            <h3 class="section-title">Рекомендации для вас</h3>
+                            <p class="section-subtitle">На основе ваших интересов</p>
+                        </div>
+                    </div>
+                    <div class="content-card">
+                        <div class="card-image">
+                            <div class="card-relevance">87%</div>
+                            <div class="card-badge">Видео</div>
+                            🪐
+                        </div>
+                        <div class="card-content">
+                            <h4 class="card-title">Марс в Стрельце: влияние на карьеру</h4>
+                            <p class="card-description">Глубокий анализ положения Марса и его влияния на профессиональную сферу.</p>
+                            <div class="card-meta">
+                                <span>📅 2 дня назад</span>
+                                <span>👤 Иван Петров</span>
+                            </div>
+                            <div class="card-tags">
+                                <span class="tag">Марс</span>
+                                <span class="tag">Карьера</span>
+                            </div>
+                            <div class="card-actions">
+                                <button class="btn btn-primary">Изучить</button>
+                                <button class="btn btn-secondary">Сохранить</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <nav class="bottom-nav">
+            <button class="nav-item active" data-screen="profile">
+                <span class="nav-icon">👤</span>
+                <span class="nav-label">Профиль</span>
+            </button>
+            <button class="nav-item" data-screen="content-screen">
+                <span class="nav-icon">📚</span>
+                <span class="nav-label">Контент</span>
+            </button>
+            <button class="nav-item" data-screen="search">
+                <span class="nav-icon">🔍</span>
+                <span class="nav-label">Поиск</span>
+            </button>
+            <button class="nav-item" data-screen="settings">
+                <span class="nav-icon">⚙️</span>
+                <span class="nav-label">Настройки</span>
+            </button>
+        </nav>
+    </div>
+
+    <div class="modal" id="achievement-modal">
+        <div class="modal-content">
+            <div class="modal-icon">🏆</div>
+            <h3 class="modal-title">Новое достижение!</h3>
+            <p class="modal-description">Вы открыли регалию "Первые шаги".</p>
+            <p class="modal-reward">+10 ⭐</p>
+            <button class="btn btn-primary" id="close-modal">Отлично!</button>
+        </div>
+    </div>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+
+        const themeToggle = document.getElementById('theme-toggle');
+        const body = document.body;
+
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        body.dataset.theme = savedTheme;
+        tg.setHeaderColor(savedTheme === 'dark' ? '#1A202C' : '#FFFFFF');
+
+
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = body.dataset.theme;
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            body.dataset.theme = newTheme;
+            localStorage.setItem('theme', newTheme);
+            tg.setHeaderColor(newTheme === 'dark' ? '#1A202C' : '#FFFFFF');
+        });
+
+        const navItems = document.querySelectorAll('.nav-item');
+        const screens = document.querySelectorAll('.screen');
+
+        navItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const screenId = item.dataset.screen;
+
+                navItems.forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+
+                screens.forEach(s => s.classList.remove('active'));
+                const activeScreen = document.getElementById(screenId);
+                if (activeScreen) {
+                    activeScreen.classList.add('active');
+                }
+            });
+        });
+
+        const modal = document.getElementById('achievement-modal');
+        const closeModal = document.getElementById('close-modal');
+
+        // Для демонстрации
+        setTimeout(() => {
+            // modal.classList.add('active');
+        }, 2000);
+
+        if(closeModal) {
+            closeModal.addEventListener('click', () => {
+                modal.classList.remove('active');
+            });
+        }
+    });
+</script>
+</body>
+</html>
